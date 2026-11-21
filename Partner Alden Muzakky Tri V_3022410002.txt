@@ -1,0 +1,77 @@
+DESKRIPSI KASUS PENGIRIMAN MAKANAN BEKU, DINGIN, DAN SEGAR
+
+IDENTITAS PEMBERI KASUS
+Nama partner: Alden Muzakky Tri Vicienza
+NIM partner: 3022410002
+
+1. DESKRIPSI KASUS
+
+Sebuah perusahaan logistik mencatat pengiriman makanan beku, dingin, dan segar antarahub di Gresik, Surabaya, Denpasar, dan Makassar. Data digunakan untuk mengetahui karakteristik muatan, memantau suhu, menghitung durasi pengiriman, serta membuat ringkasan bulanan berdasarkan layanan.
+
+Dataset Pengiriman Makanan Beku.csv merupakan data sintetis untuk latihan preprocessing. Dataset terdiri atas 202 baris dan 28 variabel. Satu baris sumber menunjukkan catatan manifest. Satu pengiriman dapat memiliki beberapa catatan karena pembaruan manifest atau pencatatan berulang. Oleh karena itu, jumlah baris awal tidak langsung menunjukkan jumlah pengiriman unik.
+
+Variabel kategorik meliputi kategori muatan, hub asal, hub tujuan, zona asal, layanan, status pengiriman, satuan pengukuran, dan sumber manifest. Variabel numerik meliputi berat, dimensi paket, jarak, biaya, nilai muatan, suhu, serta koreksi sensor. Dataset juga memuat waktu keberangkatan, batas SLA, waktu tiba, dan waktu pembaruan catatan.
+
+2. MASALAH DATA
+
+2.1 Penulisan kategori tidak konsisten
+Kategori yang sama ditulis sebagai Beku dan FROZEN, Dingin dan Chill, serta Segar dan fresh. Label yang memiliki makna sama dapat terbaca sebagai kelompok berbeda.
+
+2.2 Spasi berlebih dan perbedaan kapital
+Terdapat nilai seperti " FROZEN " dan " G " yang mengandung spasi di awal atau akhir. Penulisan huruf besar dan kecil juga tidak seragam.
+
+2.3 Kategori di luar kamus pengolahan
+Terdapat layanan oversize dan satuan berat lbs. Kamus pada pengolahan menggunakan layanan ekonomi, standar, dan prioritas, serta satuan berat kg dan gram. Label di luar kamus perlu diverifikasi sebelum diputuskan penanganannya.
+
+2.4 Duplikasi dan revisi catatan
+Pada data awal terdapat 6 baris duplikat persis. Beberapa ID juga memiliki lebih dari satu versi manifest. Catatan berulang harus diperiksa agar satu pengiriman tidak dihitung beberapa kali.
+
+2.5 Konflik pada revisi terbaru
+Empat ID memiliki catatan berbeda pada waktu pembaruan terbaru yang sama. Contohnya, KRM00698 mempunyai jarak 429 km dan 450 km. Nilai yang benar tidak dapat dipilih secara sembarangan.
+
+2.6 Format angka tidak seragam
+Beberapa kolom numerik terbaca sebagai teks karena variasi pemisah desimal dan penanda kosong. Angka perlu dinormalisasi dan dikonversi sebelum digunakan dalam perhitungan.
+
+2.7 Satuan pengukuran berbeda
+Berat dicatat dalam kg dan gram. Suhu dicatat dalam Celsius, Fahrenheit, dan Kelvin. Satuan harus disamakan sebelum pengukuran dibandingkan atau diringkas.
+
+2.8 Missing value pada variabel kategorik dan numerik
+Pada pembacaan awal dengan pandas terdapat 19 kategori muatan, 15 berat aktual, dan 17 jarak yang terbaca kosong. Selain itu, penanda seperti tanda tanya perlu dikenali sebagai missing. Jumlah missing dapat berubah setelah normalisasi penanda, pemilihan revisi, konversi satuan, dan validasi.
+
+2.9 Nilai tidak mungkin
+Pengiriman KRM00434 memiliki jarak -10 km. Nilai tersebut tidak sah sebagai jarak pengiriman dan perlu ditandai untuk ditangani tanpa mengarang jarak penggantinya.
+
+2.10 Kandidat outlier
+Setelah satuan disamakan dan pengukuran divalidasi, berat 215 kg, 215 kg, dan 240 kg terdeteksi sebagai kandidat outlier menurut IQR. Kandidat pencilan perlu diperiksa berdasarkan konteks; nilai ekstrem tidak otomatis merupakan kesalahan input.
+
+2.11 Format dan zona waktu berbeda
+Waktu dicatat dalam format ISO UTC, ISO dengan offset, dan tanggal lokal. Perbedaan tersebut dapat menghasilkan kesalahan durasi apabila waktu langsung dikurangkan tanpa penyeragaman zona.
+
+2.12 Urutan waktu tidak logis
+Setelah penyamaan zona waktu, terdapat 3 pengiriman dengan waktu tiba lebih awal daripada keberangkatan. Catatan waktu tersebut perlu ditandai dan tidak digunakan langsung untuk menghitung durasi.
+
+2.13 Pengukuran suhu tidak lengkap
+Sebagian suhu, satuan, atau koreksi sensor tidak tersedia. Pada pengiriman yang dibatalkan, suhu dapat tidak tersedia karena pengukuran tidak berlaku. Missing struktural perlu dibedakan dari pengukuran yang hilang.
+
+3. TUGAS PENGOLAHAN
+
+1) Deteksi dan seragamkan penulisan kategori, kapital, spasi, alias, serta penanda kosong.
+2) Periksa duplikasi dan revisi per ID. Pilih revisi terbaru serta pisahkan konflik yang belum dapat dipastikan.
+3) Perbaiki format angka dan samakan satuan berat serta suhu.
+4) Deteksi nilai tidak sah dan missing value. Gunakan statistik deskriptif sebelum menentukan metode pengisian numerik dan kategorik.
+5) Simpan nilai asli dan penanda agar pengukuran dapat dibedakan dari nilai hasil pengisian.
+6) Samakan format dan zona waktu, lalu periksa kronologi pengiriman.
+7) Deteksi kandidat outlier dengan histogram, boxplot, dan IQR. Jelaskan keputusan akhir; jika penghapusan hanya simulasi, nyatakan secara jelas.
+8) Bentuk atribut durasi pengiriman dalam jam dari waktu yang valid.
+9) Buat ringkasan bulanan per layanan menggunakan rata-rata pengukuran dan jumlah nilai tersedia.
+10) Sajikan hasil sebelum dan sesudah, alasan penanganan, serta input, proses, dan output setiap tahap.
+
+4. ATURAN DAN BATASAN KASUS
+
+Batas validasi latihan adalah berat lebih dari 0 sampai 300 kg, jarak lebih dari 0 sampai 1.500 km, serta suhu hasil konversi sebelum koreksi antara -60 dan 80 derajat Celsius. Batas tersebut merupakan asumsi operasional latihan, bukan standar keamanan pangan.
+
+Timestamp lokal DD/MM/YYYY HH:MM:SS ditafsirkan berdasarkan zona_asal: WIB memakai Asia/Jakarta dan WITA memakai Asia/Makassar. Timestamp yang memiliki offset menggunakan offset tertulis. Asumsi ini harus digunakan secara konsisten.
+
+Koreksi sensor ditambahkan setelah suhu dikonversi ke Celsius. Koreksi yang kosong tidak diasumsikan nol. Suhu pengiriman batal tidak diisi dengan angka perkiraan. Nilai yang belum dapat diverifikasi boleh tetap kosong dengan alasan yang dijelaskan.
+
+Kolom keuangan dan batas_sla tersedia pada dataset, tetapi belum menjadi fokus pengolahan dalam notebook saat ini. Jangan menyatakan seluruh dataset telah bersih apabila kolom tersebut belum diperiksa dan ditangani.
